@@ -10,16 +10,16 @@ namespace Enemies
     {
         public Stage stage;
         public float boundsMargin = 1f;
-
-        private Coroutine _wave;
         private readonly HashSet<Enemy> _enemies = new();
         private Camera _camera;
+        private float _maxX;
+        private float _maxY;
+        private float _minX;
+        private float _minY;
 
         private float _screenAspect;
-        private float _minX;
-        private float _maxX;
-        private float _minY;
-        private float _maxY;
+
+        private Coroutine _wave;
 
         private void Start()
         {
@@ -48,6 +48,27 @@ namespace Enemies
             }
 
             StartCoroutine(StartStage(waves));
+        }
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(
+                new Vector3(_minX, _minY, 0f),
+                new Vector3(_minX, _maxY, 0f)
+            );
+            Gizmos.DrawLine(
+                new Vector3(_maxX, _minY, 0f),
+                new Vector3(_maxX, _maxY, 0f)
+            );
+            Gizmos.DrawLine(
+                new Vector3(_minX, _minY, 0f),
+                new Vector3(_maxX, _minY, 0f)
+            );
+            Gizmos.DrawLine(
+                new Vector3(_minX, _maxY, 0f),
+                new Vector3(_maxX, _maxY, 0f)
+            );
         }
 
         private IEnumerator StartStage(Wave[] waves)
@@ -126,27 +147,6 @@ namespace Enemies
 
                 return new Vector3(x, y, 0f);
             }
-        }
-
-        private void OnDrawGizmos()
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(
-                new Vector3(_minX, _minY, 0f),
-                new Vector3(_minX, _maxY, 0f)
-            );
-            Gizmos.DrawLine(
-                new Vector3(_maxX, _minY, 0f),
-                new Vector3(_maxX, _maxY, 0f)
-            );
-            Gizmos.DrawLine(
-                new Vector3(_minX, _minY, 0f),
-                new Vector3(_maxX, _minY, 0f)
-            );
-            Gizmos.DrawLine(
-                new Vector3(_minX, _maxY, 0f),
-                new Vector3(_maxX, _maxY, 0f)
-            );
         }
     }
 }

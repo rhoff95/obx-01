@@ -5,17 +5,16 @@ namespace Enemies
 {
     public class Enemy : MonoBehaviour
     {
+        private const float BaseSpeed = 0.35f;
         public EnemyStats stats;
-        
+
         public float moveThreshold;
         public GameObject xpPrefab;
 
-        private float _speed;
-        private Transform _target;
-
         private float _health;
 
-        private const float BaseSpeed = 0.35f;
+        private float _speed;
+        private Transform _target;
 
         private void Awake()
         {
@@ -34,7 +33,7 @@ namespace Enemies
                 return;
             }
 
-            transform.position += (_speed * BaseSpeed* Time.deltaTime) * direction.normalized;
+            transform.position += _speed * BaseSpeed * Time.deltaTime * direction.normalized;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -66,10 +65,10 @@ namespace Enemies
             {
                 Instantiate(xpPrefab, transform.position, Quaternion.identity);
             }
-            
+
             var enemyManager = FindFirstObjectByType<EnemyManager>();
             enemyManager.RemoveEnemy(this);
-            
+
             Destroy(gameObject);
         }
     }

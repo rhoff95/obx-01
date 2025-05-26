@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement")]
     public float maxSpeed = 1f;
+
     public float velocitySmoothTime = 1f;
     public float angleSmoothTime;
 
@@ -19,43 +20,45 @@ public class PlayerController : MonoBehaviour
 
     [Header("Weapons")]
     public Weapon[] Weapons;
-    
+
     [Header("Pickups")]
     public float xpPickupRange;
+
     public LayerMask collectiblesLayer;
 
-    [Header("UI")] 
+    [Header("UI")]
     public GameObject levelUpPanel;
+
     public Button[] itemButtons;
     public Button buttonContinue;
     public TextMeshProUGUI xpTmp;
     public TextMeshProUGUI levelTmp;
     public Slider hpSlider;
     public Slider xpSlider;
+    private float _angle;
+    private float _angleVelocity;
+
+    private Coroutine[] _coroutines;
+    private Vector3 _currentVelocity;
+
+    private readonly float _hp = 100f;
 
     //#endregion
 
     //#region Private
 
     private InputSystem_Actions _input;
-    private Rigidbody2D _rb;
-
-    private Vector2 _moveDirection;
-    private float _angle;
-    private float _targetAngle;
-    private float _angleVelocity;
-    private Quaternion _rotation;
-
-    private Vector3 _velocity;
-    private Vector3 _currentVelocity;
-
-    private Coroutine[] _coroutines;
 
     private int _level = 1;
-    private int _xp = 0;
-    private int _requiredXp = 0;
 
-    private float _hp = 100f;
+    private Vector2 _moveDirection;
+    private Rigidbody2D _rb;
+    private int _requiredXp;
+    private Quaternion _rotation;
+    private float _targetAngle;
+
+    private Vector3 _velocity;
+    private int _xp;
 
     //#endregion
 
@@ -82,7 +85,7 @@ public class PlayerController : MonoBehaviour
 
         levelUpPanel.SetActive(false);
         buttonContinue.onClick.AddListener(MenuContinue);
-        
+
         UpdateXpRequirement();
     }
 
@@ -92,23 +95,20 @@ public class PlayerController : MonoBehaviour
         _coroutines = Weapons.Select(weapon => StartCoroutine(AttackRoutine(weapon))).ToArray();
     }
 
-    private void SetMove(Vector2 direction)
+    private void Update()
     {
-        _moveDirection = direction;
+        UpdatePosition();
+        FindNearbyPickups();
     }
 
-    private void SetDirection(Vector2 direction)
+    private void OnEnable()
     {
-        _targetAngle = (Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+        _input.Enable();
     }
 
-    private IEnumerator AttackRoutine(Weapon weapon)
+    private void OnDisable()
     {
-        while (true)
-        {
-            weapon.Attack(_rb.position, _rotation);
-            yield return new WaitForSeconds(weapon.cooldown);
-        }
+        _input.Disable();
     }
 
     private void OnDestroy()
@@ -119,10 +119,49 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void OnDrawGizmos()
     {
-        UpdatePosition();
-        FindNearbyPickups();
+        Gizmos.DrawWireSphere(transform.position, xpPickupRange);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!other.CompareTag("Gem"))
+        {
+            return;
+        }
+
+        var gem = other.GetComponent<XpGem>();
+
+        _xp += gem.xp;
+
+        if (_xp >= _requiredXp)
+        {
+            LevelUp();
+        }
+
+        UpdateUi();
+
+        gem.Collect();
+    }
+
+    private void SetMove(Vector2 direction)
+    {
+        _moveDirection = direction;
+    }
+
+    private void SetDirection(Vector2 direction)
+    {
+        _targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+    }
+
+    private IEnumerator AttackRoutine(Weapon weapon)
+    {
+        while (true)
+        {
+            weapon.Attack(_rb.position, _rotation);
+            yield return new WaitForSeconds(weapon.cooldown);
+        }
     }
 
     private void UpdatePosition()
@@ -153,22 +192,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void OnEnable()
-    {
-        _input.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _input.Disable();
-    }
-
     private void UpdateUi()
     {
         levelTmp.text = $"Level {_level}";
         xpTmp.text = $"{_xp}/{_requiredXp} XP";
 
-        xpSlider.value = _xp / (float) _requiredXp;
+        xpSlider.value = _xp / (float)_requiredXp;
         hpSlider.value = _hp / 100f;
     }
 
@@ -180,21 +209,15 @@ public class PlayerController : MonoBehaviour
         itemButtons[1].gameObject.SetActive(true);
         itemButtons[2].gameObject.SetActive(false);
         itemButtons[3].gameObject.SetActive(false);
-        
-        itemButtons[0].onClick.AddListener(() =>
-        {
-            Debug.Log("Clicked item 1!");
-        });
-        itemButtons[1].onClick.AddListener(() =>
-        {
-            Debug.Log("Clicked item 2!");
-        });
-        
+
+        itemButtons[0].onClick.AddListener(() => { Debug.Log("Clicked item 1!"); });
+        itemButtons[1].onClick.AddListener(() => { Debug.Log("Clicked item 2!"); });
+
         levelUpPanel.SetActive(true);
-        
+
         _level++;
         _xp -= _requiredXp;
-        
+
         UpdateXpRequirement();
 
         UpdateUi();
@@ -204,32 +227,6 @@ public class PlayerController : MonoBehaviour
     {
         levelUpPanel.SetActive(false);
         Time.timeScale = 1;
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (!other.CompareTag("Gem"))
-        {
-            return;
-        }
-
-        var gem = other.GetComponent<XpGem>();
-
-        _xp += gem.xp;
-
-        if (_xp >= _requiredXp)
-        {
-            LevelUp();
-        }
-
-        UpdateUi();
-
-        gem.Collect();
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawWireSphere(transform.position, xpPickupRange);
     }
 
     private void UpdateXpRequirement()
