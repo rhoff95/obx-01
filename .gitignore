@@ -97,13 +97,9 @@ crashlytics-build.properties
 # IntelliJ project
 *.iml
 
-# User local IDEA run configurations
-.run/
-
 # Build output & caches for IntelliJ plugin development
 build/
 idea-sandbox/
-.gradle/
 
 ## File-based project format:
 *.iws
@@ -121,7 +117,6 @@ atlassian-ide-plugin.xml
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
 crashlytics.properties
-crashlytics-build.properties
 fabric.properties
 
 # JavaScript resources
